@@ -1,0 +1,172 @@
+name: Create Native Android App
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  create-app:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Create Android project folder
+        run: |
+          mkdir -p ExampleNativeApp/app/src/main/java/com/example/nativeapp
+          mkdir -p ExampleNativeApp/app/src/main/res/values
+
+          cat > ExampleNativeApp/settings.gradle <<'EOF'
+          pluginManagement {
+              repositories {
+                  google()
+                  mavenCentral()
+                  gradlePluginPortal()
+              }
+          }
+
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+
+              repositories {
+                  google()
+                  mavenCentral()
+              }
+          }
+
+          rootProject.name = "ExampleNativeApp"
+          include(":app")
+          EOF
+
+          cat > ExampleNativeApp/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application' version '8.7.3' apply false
+          }
+          EOF
+
+          cat > ExampleNativeApp/gradle.properties <<'EOF'
+          org.gradle.jvmargs=-Xmx2048m
+          android.useAndroidX=true
+          EOF
+
+          cat > ExampleNativeApp/app/build.gradle <<'EOF'
+          plugins {
+              id 'com.android.application'
+          }
+
+          android {
+              namespace 'com.example.nativeapp'
+              compileSdk 35
+
+              defaultConfig {
+                  applicationId 'com.example.nativeapp'
+                  minSdk 23
+                  targetSdk 35
+                  versionCode 1
+                  versionName '1.0'
+              }
+          }
+          EOF
+
+          cat > ExampleNativeApp/app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+              <application
+                  android:theme="@style/AppTheme"
+                  android:label="Example Native App">
+
+                  <activity
+                      android:name=".MainActivity"
+                      android:exported="true">
+
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN" />
+                          <category android:name="android.intent.category.LAUNCHER" />
+                      </intent-filter>
+
+                  </activity>
+
+              </application>
+
+          </manifest>
+          EOF
+
+          cat > ExampleNativeApp/app/src/main/res/values/styles.xml <<'EOF'
+          <resources>
+              <style name="AppTheme"
+                     parent="android:style/Theme.Material.Light.NoActionBar">
+                  <item name="android:fontFamily">sans</item>
+                  <item name="android:colorAccent">#3F51B5</item>
+              </style>
+          </resources>
+          EOF
+
+          cat > ExampleNativeApp/app/src/main/java/com/example/nativeapp/MainActivity.java <<'EOF'
+          package com.example.nativeapp;
+
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.graphics.Color;
+          import android.view.Gravity;
+          import android.widget.TextView;
+
+          public class MainActivity extends Activity {
+
+              @Override
+              protected void onCreate(Bundle savedInstanceState) {
+                  super.onCreate(savedInstanceState);
+
+                  TextView text = new TextView(this);
+                  text.setText("Hello from Example Native App!");
+                  text.setTextSize(22);
+                  text.setTextColor(Color.BLACK);
+                  text.setGravity(Gravity.CENTER);
+
+                  setContentView(text);
+              }
+          }
+          EOF
+
+      - name: Install Gradle
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gradle
+
+      - name: Generate Gradle wrapper
+        working-directory: ExampleNativeApp
+        run: |
+          gradle wrapper --gradle-version 8.10.2
+
+      - name: Build APK
+        working-directory: ExampleNativeApp
+        run: |
+          ./gradlew assembleDebug
+
+      - name: Commit ExampleNativeApp folder
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add ExampleNativeApp/
+
+          if git diff --cached --quiet; then
+              echo "ExampleNativeApp is already up to date."
+          else
+              git commit -m "Create ExampleNativeApp"
+              git push
+          fi
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ExampleNativeApp-debug
+          path: ExampleNativeApp/app/build/outputs/apk/debug/app-debug.apk
