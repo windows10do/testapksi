@@ -19,60 +19,36 @@ on:
           - progress
 
 env:
-  PYTHONUNBUFFERED: "1"
   PYTHONFORANDROID_PREREQUISITES_INSTALL_INTERACTIVE: "0"
+  PYTHONUNBUFFERED: "1"
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v7
         with:
-          python-version: "3.12"
+          python-version: "3.x"
 
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
-          distribution: temurin
           java-version: "17"
+          distribution: "temurin"
 
-      - name: Install Linux dependencies
-        run: |
-          sudo apt-get update
-
-          sudo apt-get install -y \
-            git \
-            zip \
-            unzip \
-            autoconf \
-            automake \
-            libtool \
-            libtool-bin \
-            pkg-config \
-            zlib1g-dev \
-            libncurses5-dev \
-            libncursesw5-dev \
-            libtinfo5 \
-            cmake \
-            libffi-dev \
-            libssl-dev \
-            build-essential
+      - name: Checkout repository
+        uses: actions/checkout@v7
 
       - name: Install Buildozer
         run: |
-          python -m pip install --upgrade pip setuptools wheel
+          python -m pip install --upgrade pip
+          python -m pip install buildozer
 
-          python -m pip install \
-            "buildozer" \
-            "cython<3.4"
-
+      - name: Check Buildozer
+        run: |
           buildozer --version
-          cython --version
           python --version
           java -version
 
@@ -107,7 +83,6 @@ jobs:
                   )
 
                   if MODE == "button":
-
                       self.add_widget(
                           Label(
                               text="Button Mode",
@@ -119,21 +94,16 @@ jobs:
                           text="Press the button!",
                           font_size="22sp"
                       )
-
                       self.add_widget(self.status)
 
                       button = Button(
                           text="Click me",
                           font_size="24sp"
                       )
-
                       button.bind(on_press=self.clicked)
-
                       self.add_widget(button)
 
-
                   elif MODE == "slider":
-
                       self.add_widget(
                           Label(
                               text="Slider Mode",
@@ -145,7 +115,6 @@ jobs:
                           text="Value: 50",
                           font_size="24sp"
                       )
-
                       self.add_widget(self.value_label)
 
                       slider = Slider(
@@ -153,16 +122,10 @@ jobs:
                           max=100,
                           value=50
                       )
-
-                      slider.bind(
-                          value=self.slider_changed
-                      )
-
+                      slider.bind(value=self.slider_changed)
                       self.add_widget(slider)
 
-
                   elif MODE == "counter":
-
                       self.add_widget(
                           Label(
                               text="Counter Mode",
@@ -176,23 +139,16 @@ jobs:
                           text="Count: 0",
                           font_size="28sp"
                       )
-
                       self.add_widget(self.counter_label)
 
                       button = Button(
                           text="Increase",
                           font_size="24sp"
                       )
-
-                      button.bind(
-                          on_press=self.increase
-                      )
-
+                      button.bind(on_press=self.increase)
                       self.add_widget(button)
 
-
                   elif MODE == "checkbox":
-
                       self.add_widget(
                           Label(
                               text="Checkbox Mode",
@@ -204,22 +160,15 @@ jobs:
                           text="Unchecked",
                           font_size="24sp"
                       )
-
                       self.add_widget(self.status)
 
-                      checkbox = CheckBox(
-                          active=False
-                      )
-
+                      checkbox = CheckBox(active=False)
                       checkbox.bind(
                           active=self.checkbox_changed
                       )
-
                       self.add_widget(checkbox)
 
-
                   elif MODE == "input":
-
                       self.add_widget(
                           Label(
                               text="Text Input Mode",
@@ -232,30 +181,22 @@ jobs:
                           font_size="24sp",
                           multiline=False
                       )
-
                       self.add_widget(self.input)
 
                       button = Button(
                           text="Show text",
                           font_size="24sp"
                       )
-
-                      button.bind(
-                          on_press=self.show_text
-                      )
-
+                      button.bind(on_press=self.show_text)
                       self.add_widget(button)
 
                       self.result = Label(
                           text="",
                           font_size="22sp"
                       )
-
                       self.add_widget(self.result)
 
-
                   elif MODE == "switch":
-
                       self.add_widget(
                           Label(
                               text="Switch Mode",
@@ -267,22 +208,15 @@ jobs:
                           text="OFF",
                           font_size="28sp"
                       )
-
                       self.add_widget(self.status)
 
-                      switch = Switch(
-                          active=False
-                      )
-
+                      switch = Switch(active=False)
                       switch.bind(
                           active=self.switch_changed
                       )
-
                       self.add_widget(switch)
 
-
                   elif MODE == "progress":
-
                       self.add_widget(
                           Label(
                               text="Progress Mode",
@@ -294,23 +228,18 @@ jobs:
                           max=100,
                           value=0
                       )
-
                       self.add_widget(self.progress)
 
                       button = Button(
                           text="Increase Progress",
                           font_size="24sp"
                       )
-
                       button.bind(
                           on_press=self.increase_progress
                       )
-
                       self.add_widget(button)
 
-
                   else:
-
                       self.add_widget(
                           Label(
                               text="Hello from Kivy!",
@@ -325,24 +254,19 @@ jobs:
                           )
                       )
 
-
               def clicked(self, instance):
                   self.status.text = "Button clicked!"
-
 
               def slider_changed(self, instance, value):
                   self.value_label.text = (
                       "Value: " + str(int(value))
                   )
 
-
               def increase(self, instance):
                   self.count += 1
-
                   self.counter_label.text = (
                       "Count: " + str(self.count)
                   )
-
 
               def checkbox_changed(self, instance, value):
                   if value:
@@ -350,17 +274,14 @@ jobs:
                   else:
                       self.status.text = "Unchecked"
 
-
               def show_text(self, instance):
                   self.result.text = self.input.text
-
 
               def switch_changed(self, instance, value):
                   if value:
                       self.status.text = "ON"
                   else:
                       self.status.text = "OFF"
-
 
               def increase_progress(self, instance):
                   self.progress.value += 10
@@ -383,7 +304,7 @@ jobs:
 
           title = Kivy Modes App
           package.name = kivymodes
-          package.domain = org.example
+          package.domain = org.example.kivymodes
 
           source.dir = .
           source.include_exts = py,png,jpg,kv,atlas
@@ -402,6 +323,10 @@ jobs:
           android.archs = arm64-v8a
 
           android.allow_backup = True
+          android.accept_sdk_license = True
+          android.debug_artifact = apk
+
+          p4a.branch = develop
 
           [buildozer]
 
@@ -412,12 +337,24 @@ jobs:
           echo "===== PROJECT ====="
           find app/mode -maxdepth 2 -type f -print
 
-      - name: Prepare Android toolchain
+      # This is the same toolchain-preparation command used by
+      # the current official Buildozer Android CI.
+      - name: Setup Android SDK, NDK, and python-for-android
         working-directory: app/mode
+        shell: bash
         run: |
-          echo "Preparing Android SDK/NDK/python-for-android..."
+          set -o pipefail
 
-          buildozer android p4a -- --help
+          buildozer android p4a -- --help 2>&1 \
+            | tee "$GITHUB_WORKSPACE/p4a-setup.log"
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt update
+
+          sudo apt -y install \
+            automake \
+            libltdl-dev
 
       - name: Build APK
         working-directory: app/mode
@@ -426,19 +363,20 @@ jobs:
           set -o pipefail
 
           echo "========================================"
-          echo "BUILDING KIVY APK"
+          echo "BUILDING KIVY ANDROID APK"
           echo "MODE: ${{ inputs.mode }}"
+          echo "PROJECT: app/mode"
           echo "========================================"
 
-          buildozer -v android debug 2>&1 \
+          buildozer android debug 2>&1 \
             | tee "$GITHUB_WORKSPACE/buildozer.log"
 
-      - name: Show APK files
+      - name: Find APK
         if: always()
         run: |
-          echo "===== APK SEARCH ====="
+          echo "===== APK FILES ====="
 
-          find app/mode \
+          find app/mode/bin \
             -type f \
             -name "*.apk" \
             -ls 2>/dev/null || true
@@ -464,7 +402,15 @@ jobs:
           path: output/*.apk
           if-no-files-found: error
 
-      - name: Upload complete Buildozer log
+      - name: Upload toolchain log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: p4a-setup-log-${{ inputs.mode }}
+          path: p4a-setup.log
+          if-no-files-found: warn
+
+      - name: Upload Buildozer log
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -472,7 +418,7 @@ jobs:
           path: buildozer.log
           if-no-files-found: warn
 
-      - name: Upload Buildozer debug directory
+      - name: Upload debug files
         if: failure()
         uses: actions/upload-artifact@v4
         with:
