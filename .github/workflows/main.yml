@@ -20,8 +20,11 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Create Android project folder
+      - name: Create Android project
+        shell: bash
         run: |
+          set -eux
+
           mkdir -p ExampleNativeApp/app/src/main/java/com/example/nativeapp
           mkdir -p ExampleNativeApp/app/src/main/res/values
 
@@ -36,7 +39,6 @@ jobs:
 
           dependencyResolutionManagement {
               repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-
               repositories {
                   google()
                   mavenCentral()
@@ -136,30 +138,51 @@ jobs:
           }
           EOF
 
-      - name: Install Gradle
+      - name: Download Gradle
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gradle
+          set -eux
 
-      - name: Generate Gradle wrapper
+          curl -fL \
+            --retry 5 \
+            --retry-delay 2 \
+            -o gradle.zip \
+            https://services.gradle.org/distributions/gradle-8.10.2-bin.zip
+
+          unzip -q gradle.zip
+
+          echo "$PWD/gradle-8.10.2/bin" >> "$GITHUB_PATH"
+
+      - name: Create Gradle wrapper files
         working-directory: ExampleNativeApp
+        shell: bash
         run: |
-          gradle wrapper --gradle-version 8.10.2
+          set -eux
 
-      - name: Build APK
+          gradle wrapper \
+            --gradle-version 8.10.2 \
+            --distribution-type bin
+
+      - name: Build real APK
         working-directory: ExampleNativeApp
+        shell: bash
         run: |
-          ./gradlew assembleDebug
+          set -eux
 
-      - name: Commit ExampleNativeApp folder
+          ./gradlew --no-daemon assembleDebug
+
+      - name: Commit generated project
+        shell: bash
         run: |
+          set -eux
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
           git add ExampleNativeApp/
 
           if git diff --cached --quiet; then
-              echo "ExampleNativeApp is already up to date."
+              echo "No changes to commit."
           else
               git commit -m "Create ExampleNativeApp"
               git push
