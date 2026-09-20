@@ -12,10 +12,15 @@ on:
           - text
           - button
           - slider
+          - counter
+          - checkbox
+          - input
+          - switch
+          - progress
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout repository
@@ -25,22 +30,24 @@ jobs:
         env:
           APP_MODE: ${{ inputs.mode }}
         run: |
-          mkdir -p app
+          mkdir -p app/mode
 
-          cat > app/main.py <<'PY'
-          import os
-
+          cat > app/mode/main.py <<PY
           from kivy.app import App
           from kivy.uix.boxlayout import BoxLayout
           from kivy.uix.label import Label
           from kivy.uix.button import Button
           from kivy.uix.slider import Slider
+          from kivy.uix.checkbox import CheckBox
+          from kivy.uix.textinput import TextInput
+          from kivy.uix.switch import Switch
+          from kivy.uix.progressbar import ProgressBar
 
-
-          MODE = os.environ.get("APP_MODE", "text")
+          MODE = "${APP_MODE}"
 
 
           class MainWidget(BoxLayout):
+
               def __init__(self, **kwargs):
                   super().__init__(
                       orientation="vertical",
@@ -52,8 +59,8 @@ jobs:
                   if MODE == "button":
                       self.add_widget(
                           Label(
-                              text="Kivy Button Mode",
-                              font_size="28sp"
+                              text="Button Mode",
+                              font_size="30sp"
                           )
                       )
 
@@ -61,20 +68,24 @@ jobs:
                           text="Press the button!",
                           font_size="22sp"
                       )
+
                       self.add_widget(self.status)
 
                       button = Button(
                           text="Click me",
                           font_size="24sp"
                       )
+
                       button.bind(on_press=self.clicked)
+
                       self.add_widget(button)
+
 
                   elif MODE == "slider":
                       self.add_widget(
                           Label(
-                              text="Kivy Slider Mode",
-                              font_size="28sp"
+                              text="Slider Mode",
+                              font_size="30sp"
                           )
                       )
 
@@ -82,6 +93,7 @@ jobs:
                           text="Value: 50",
                           font_size="24sp"
                       )
+
                       self.add_widget(self.value_label)
 
                       slider = Slider(
@@ -89,8 +101,160 @@ jobs:
                           max=100,
                           value=50
                       )
-                      slider.bind(value=self.slider_changed)
+
+                      slider.bind(
+                          value=self.slider_changed
+                      )
+
                       self.add_widget(slider)
+
+
+                  elif MODE == "counter":
+                      self.add_widget(
+                          Label(
+                              text="Counter Mode",
+                              font_size="30sp"
+                          )
+                      )
+
+                      self.count = 0
+
+                      self.counter_label = Label(
+                          text="Count: 0",
+                          font_size="28sp"
+                      )
+
+                      self.add_widget(
+                          self.counter_label
+                      )
+
+                      button = Button(
+                          text="Increase",
+                          font_size="24sp"
+                      )
+
+                      button.bind(
+                          on_press=self.increase
+                      )
+
+                      self.add_widget(button)
+
+
+                  elif MODE == "checkbox":
+                      self.add_widget(
+                          Label(
+                              text="Checkbox Mode",
+                              font_size="30sp"
+                          )
+                      )
+
+                      self.status = Label(
+                          text="Unchecked",
+                          font_size="24sp"
+                      )
+
+                      self.add_widget(self.status)
+
+                      checkbox = CheckBox(
+                          active=False
+                      )
+
+                      checkbox.bind(
+                          active=self.checkbox_changed
+                      )
+
+                      self.add_widget(checkbox)
+
+
+                  elif MODE == "input":
+                      self.add_widget(
+                          Label(
+                              text="Text Input Mode",
+                              font_size="30sp"
+                          )
+                      )
+
+                      self.input = TextInput(
+                          hint_text="Type something...",
+                          font_size="24sp",
+                          multiline=False
+                      )
+
+                      self.add_widget(self.input)
+
+                      button = Button(
+                          text="Show text",
+                          font_size="24sp"
+                      )
+
+                      button.bind(
+                          on_press=self.show_text
+                      )
+
+                      self.add_widget(button)
+
+                      self.result = Label(
+                          text="",
+                          font_size="22sp"
+                      )
+
+                      self.add_widget(self.result)
+
+
+                  elif MODE == "switch":
+                      self.add_widget(
+                          Label(
+                              text="Switch Mode",
+                              font_size="30sp"
+                          )
+                      )
+
+                      self.status = Label(
+                          text="OFF",
+                          font_size="28sp"
+                      )
+
+                      self.add_widget(self.status)
+
+                      switch = Switch(
+                          active=False
+                      )
+
+                      switch.bind(
+                          active=self.switch_changed
+                      )
+
+                      self.add_widget(switch)
+
+
+                  elif MODE == "progress":
+                      self.add_widget(
+                          Label(
+                              text="Progress Mode",
+                              font_size="30sp"
+                          )
+                      )
+
+                      self.progress = ProgressBar(
+                          max=100,
+                          value=0
+                      )
+
+                      self.add_widget(
+                          self.progress
+                      )
+
+                      button = Button(
+                          text="Increase Progress",
+                          font_size="24sp"
+                      )
+
+                      button.bind(
+                          on_press=self.increase_progress
+                      )
+
+                      self.add_widget(button)
+
 
                   else:
                       self.add_widget(
@@ -107,14 +271,52 @@ jobs:
                           )
                       )
 
+
               def clicked(self, instance):
                   self.status.text = "Button clicked!"
 
+
               def slider_changed(self, instance, value):
-                  self.value_label.text = f"Value: {int(value)}"
+                  self.value_label.text = (
+                      "Value: " + str(int(value))
+                  )
+
+
+              def increase(self, instance):
+                  self.count += 1
+
+                  self.counter_label.text = (
+                      "Count: " + str(self.count)
+                  )
+
+
+              def checkbox_changed(self, instance, value):
+                  if value:
+                      self.status.text = "Checked"
+                  else:
+                      self.status.text = "Unchecked"
+
+
+              def show_text(self, instance):
+                  self.result.text = self.input.text
+
+
+              def switch_changed(self, instance, value):
+                  if value:
+                      self.status.text = "ON"
+                  else:
+                      self.status.text = "OFF"
+
+
+              def increase_progress(self, instance):
+                  self.progress.value += 10
+
+                  if self.progress.value >= 100:
+                      self.progress.value = 0
 
 
           class MyApp(App):
+
               def build(self):
                   return MainWidget()
 
@@ -122,7 +324,7 @@ jobs:
           MyApp().run()
           PY
 
-          cat > app/buildozer.spec <<'SPEC'
+          cat > app/mode/buildozer.spec <<'SPEC'
           [app]
 
           title = Kivy Modes App
@@ -140,10 +342,10 @@ jobs:
 
           fullscreen = 0
 
-          android.api = 35
+          android.api = 34
           android.minapi = 23
 
-          android.archs = arm64-v8a, armeabi-v7a
+          android.archs = arm64-v8a
 
           android.allow_backup = True
 
@@ -153,16 +355,23 @@ jobs:
           warn_on_root = 1
           SPEC
 
-      - name: Install Buildozer dependencies
+          echo "Created Kivy project:"
+          find app/mode -maxdepth 2 -type f -print
+
+      - name: Install system dependencies
         run: |
           sudo apt-get update
+
           sudo apt-get install -y \
             git \
             zip \
             unzip \
             openjdk-17-jdk \
+            python3 \
             python3-pip \
+            python3-venv \
             autoconf \
+            automake \
             libtool \
             pkg-config \
             zlib1g-dev \
@@ -172,23 +381,94 @@ jobs:
             libffi-dev \
             libssl-dev
 
-          python3 -m pip install --upgrade pip
-          python3 -m pip install buildozer cython
+      - name: Create Python virtual environment
+        run: |
+          python3 -m venv .venv
+
+          . .venv/bin/activate
+
+          python -m pip install --upgrade \
+            pip \
+            setuptools \
+            wheel
+
+          python -m pip install \
+            "cython==0.29.37" \
+            "buildozer==1.5.0"
+
+          echo "$GITHUB_WORKSPACE/.venv/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Buildozer
+        run: |
+          buildozer --version
+          cython --version
+          python3 --version
+          java -version
 
       - name: Build APK
-        working-directory: app
-        env:
-          APP_MODE: ${{ inputs.mode }}
+        working-directory: app/mode
+        shell: bash
         run: |
-          buildozer android debug
+          set -o pipefail
 
-      - name: Find APK
+          echo "========================================"
+          echo "KIVY ANDROID BUILD"
+          echo "MODE: ${{ inputs.mode }}"
+          echo "PROJECT: app/mode"
+          echo "========================================"
+
+          rm -rf .buildozer
+          rm -rf bin
+
+          buildozer -v android debug 2>&1 \
+            | tee "$GITHUB_WORKSPACE/buildozer.log"
+
+      - name: Show build files
+        if: always()
+        run: |
+          echo "===== PROJECT ====="
+          find app/mode -maxdepth 3 -type f | sort || true
+
+          echo "===== APK ====="
+          find app/mode/bin \
+            -type f \
+            -name "*.apk" \
+            -ls 2>/dev/null || true
+
+      - name: Collect APK
+        if: success()
         run: |
           mkdir -p output
-          find app/bin -type f -name "*.apk" -exec cp {} output/ \;
+
+          find app/mode/bin \
+            -type f \
+            -name "*.apk" \
+            -exec cp {} output/ \;
+
+          ls -lh output/
 
       - name: Upload APK
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: kivy-${{ inputs.mode }}-apk
           path: output/*.apk
+          if-no-files-found: error
+
+      - name: Upload Buildozer log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: buildozer-log-${{ inputs.mode }}
+          path: buildozer.log
+          if-no-files-found: warn
+
+      - name: Upload build debug files
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: buildozer-debug-${{ inputs.mode }}
+          path: |
+            app/mode/.buildozer
+            app/mode/bin
+          if-no-files-found: ignore
