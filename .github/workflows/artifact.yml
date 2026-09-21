@@ -1,0 +1,38 @@
+name: Commit Existing Artifacts
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download existing artifacts
+        uses: actions/download-artifact@v5
+        with:
+          path: artifacts
+          pattern: '*'
+          merge-multiple: false
+
+      - name: Commit artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          mkdir -p artifacts
+          git add artifacts/
+
+          if git diff --cached --quiet; then
+            echo "No artifact changes."
+          else
+            git commit -m "Add existing GitHub Actions artifacts"
+            git push
+          fi
