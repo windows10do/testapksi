@@ -1,0 +1,88 @@
+name: Collect All Artifacts
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download all workflow artifacts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const path = require("path");
+
+            const artifactsDir = path.join(process.env.GITHUB_WORKSPACE, "artifacts");
+
+            fs.rmSync(artifactsDir, { recursive: true, force: true });
+            fs.mkdirSync(artifactsDir, { recursive: true });
+
+            let page = 1;
+            let allArtifacts = [];
+
+            while (true) {
+              const { data } = await github.rest.actions.listArtifactsForRepo({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                per_page: 100,
+                page
+              });
+
+              allArtifacts.push(...data.artifacts);
+
+              if (data.artifacts.length < 100)
+                break;
+
+              page++;
+            }
+
+            console.log(`Found ${allArtifacts.length} artifacts.`);
+
+            for (const artifact of allArtifacts) {
+              const safeName = artifact.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+              const output = path.join(artifactsDir, `${artifact.id}-${safeName}.zip`);
+
+              console.log(`Downloading: ${artifact.name} (${artifact.id})`);
+
+              const response = await github.request(
+                "GET /repos/{owner}/{repo}/actions/artifacts/{artifact_id}/zip",
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  artifact_id: artifact.id,
+                  headers: {
+                    accept: "application/vnd.github+json"
+                  }
+                }
+              );
+
+              fs.writeFileSync(output, Buffer.from(response.data));
+
+              console.log(`Saved: ${output}`);
+            }
+
+      - name: Commit artifacts
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add artifacts/
+
+          if git diff --cached --quiet; then
+            echo "No artifact changes."
+          else
+            git commit -m "Update GitHub Actions artifacts"
+            git push
+          fi
